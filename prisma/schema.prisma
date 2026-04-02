@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  ticker    String   @unique
+  name      String
+  exchange  String?
+  sector    String?
+  industry  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  financials  Financials[]
+  priceCache  PriceCache[]
+}
+
+model Financials {
+  id          String   @id @default(cuid())
+  companyId   String
+  period      String   // "annual" | "quarterly"
+  fiscalYear  Int
+  fiscalQuarter Int?
+  statement   String   // "income" | "balance" | "cashflow"
+  data        Json
+  fetchedAt   DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, period, fiscalYear, fiscalQuarter, statement])
+  @@index([companyId])
+}
+
+model PriceCache {
+  id          String   @id @default(cuid())
+  companyId   String
+  date        DateTime
+  open        Float
+  high        Float
+  low         Float
+  close       Float
+  volume      BigInt
+  fetchedAt   DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date])
+  @@index([companyId, date])
+}
