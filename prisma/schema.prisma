@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Company {
@@ -16,6 +16,12 @@ model Company {
   industry  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Cached API responses
+  profileData       Json?
+  profileFetchedAt  DateTime?
+  metricsData       Json?
+  metricsFetchedAt  DateTime?
 
   financials  Financials[]
   priceCache  PriceCache[]
@@ -35,6 +41,27 @@ model Financials {
 
   @@unique([companyId, period, fiscalYear, fiscalQuarter, statement])
   @@index([companyId])
+}
+
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  ticker    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, ticker])
+  @@index([userId])
+}
+
+model SavedComp {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  tickers   String[] // ordered list of tickers
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model PriceCache {
